@@ -10,6 +10,8 @@ use App\Http\Requests\Api\V1\UpdateTicketRequest;
 use App\Http\Resources\V1\TicketResource;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Policies\V1\TicketPolicy;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -17,6 +19,8 @@ use phpDocumentor\Reflection\DocBlock\Tags\Author;
 
 class AuthorTicketController extends ApiController
 {
+    protected $policyClass = TicketPolicy::class;
+
     public function index($author_id, TicketFilter $filters)
     {
         return TicketResource::collection(
@@ -24,24 +28,34 @@ class AuthorTicketController extends ApiController
         );
     }
 
-    public function store(StoreTicketRequest $request)
+    public function store(StoreTicketRequest $request, $author_id)
     {
-        return new TicketResource(Ticket::create($request->mappedAttributes()));
+        try {
+            $this->isAble('store', Ticket::class);
+
+            return new TicketResource(Ticket::create($request->mappedAttributes([
+                'author' => $author_id,
+            ])));
+        } catch (AuthorizationException) {
+            return $this->error("You are not authorize to create this resource", 401);
+        }
     }
 
     public function destroy($author_id, $ticket_id)
     {
         try {
-            $ticket = Ticket::findOrFail($ticket_id);
+            $ticket = Ticket::where('id', $ticket_id)
+                ->where('user_id', $author_id)
+                ->firstOrFail();
 
-            if ($ticket->user_id == $author_id) {
-                $ticket->delete();
-                return $this->ok("Ticket deleted successfully");
-            }
+            $this->isAble('delete', $ticket);
 
-            return $this->error("Ticket not found", 404);
+            $ticket->delete();
+            return $this->ok("Ticket deleted successfully");
         } catch (ModelNotFoundException) {
             return $this->error("Ticket not found", 404);
+        } catch (AuthorizationException) {
+            return $this->error("You are not authorize to delete this resource", 401);
         }
     }
 
@@ -49,17 +63,18 @@ class AuthorTicketController extends ApiController
     {
         // PUT
         try {
-            $ticket = Ticket::findOrFail($ticket_id);
+            $ticket = Ticket::where('id', $ticket_id)
+                ->where('user_id', $author_id)
+                ->firstOrFail();
 
-            if ($ticket->user_id == $author_id) {
-                $ticket->update($request->mappedAttributes());
+            $this->isAble('replace', $ticket);
 
-                return new TicketResource($ticket);
-            }
-
-            return $this->error("Ticket not found", 404);
+            $ticket->update($request->mappedAttributes());
+            return new TicketResource($ticket);
         } catch (ModelNotFoundException $exception) {
             return $this->error("Ticket not found", 404);
+        } catch (AuthorizationException) {
+            return $this->error("You are not authorize to replace this resource", 401);
         }
     }
 
@@ -67,17 +82,18 @@ class AuthorTicketController extends ApiController
     {
         // PATCH
         try {
-            $ticket = Ticket::findOrFail($ticket_id);
+            $ticket = Ticket::where('id', $ticket_id)
+                ->where('user_id', $author_id)
+                ->firstOrFail();
 
-            if ($ticket->user_id == $author_id) {
-                $ticket->update($request->mappedAttributes());
+            $this->isAble('update', $ticket);
 
-                return new TicketResource($ticket);
-            }
-
-            return $this->error("Ticket not found", 404);
+            $ticket->update($request->mappedAttributes());
+            return new TicketResource($ticket);
         } catch (ModelNotFoundException $exception) {
             return $this->error("Ticket not found", 404);
+        } catch (AuthorizationException) {
+            return $this->error("You are not authorize to update this resource", 401);
         }
     }
 }

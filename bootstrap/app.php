@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\CustomExceptions;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -23,5 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->renderable(function (\Throwable $exception) {
+            return (new CustomExceptions)->render($exception);
+        });
     })->create();

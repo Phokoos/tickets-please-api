@@ -44,19 +44,12 @@ class TicketPolicy
 
     public function replace(User $user)
     {
-        if ($user->tokenCan(Abilities::REPLACE_TICKET)) {
-            return true;
-        }
-
-        return false;
+        return $user->tokenCan(Abilities::REPLACE_TICKET);
     }
 
-    public function store(User $user)
+    public function store(User $user, $ticket = null)
     {
-        if ($user->tokenCan(Abilities::CREATE_TICKET)) {
-            return true;
-        }
-
-        return false;
+        return $user->tokenCan(Abilities::CREATE_TICKET) ||
+            $user->tokenCan(Abilities::CREATE_OWN_TICKET);
     }
 }
