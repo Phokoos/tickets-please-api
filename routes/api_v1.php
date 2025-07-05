@@ -7,10 +7,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 
-Route::middleware('auth:sanctum')->resource('tickets', TicketController::class);
-Route::middleware('auth:sanctum')->resource('authors', AuthorsController::class);
-Route::middleware('auth:sanctum')->resource('authors.tickets', AuthorTicketController::class);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::resource('tickets', TicketController::class)->except('update');
+    Route::put('tickets/{ticket}', [TicketController::class, 'replace']);
+    Route::patch('tickets/{ticket}', [TicketController::class, 'update']);
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+    Route::resource('authors', AuthorsController::class);
+    Route::resource('authors.tickets', AuthorTicketController::class)->except('update');
+    Route::put('authors/{author}/tickets/{ticket}', [AuthorTicketController::class, 'replace']);
+    Route::patch('authors/{author}/tickets/{ticket}', [AuthorTicketController::class, 'update']);
+
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+});
+
