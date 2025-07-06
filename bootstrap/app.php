@@ -10,10 +10,10 @@ return Application::configure(basePath: dirname(__DIR__))
         using: function () {
             Route::middleware('api')
                 ->prefix('api/v1')
-                ->group(__DIR__ . '/../routes/api_v1.php');
+                ->group(__DIR__ . '/../routes/api/api_v1.php');
             Route::middleware('api')
                 ->prefix('api/')
-                ->group(__DIR__ . '/../routes/api.php');
+                ->group(__DIR__ . '/../routes/api/api.php');
         },
         web: __DIR__ . '/../routes/web.php',
 //        api: __DIR__ . '/../routes/api.php',
